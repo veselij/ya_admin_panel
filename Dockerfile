@@ -7,6 +7,7 @@ RUN pip install --upgrade pip
 RUN addgroup web && adduser web --home $HOME --ingroup web
 RUN mkdir /var/log/gunicorn/ && chown -R web:web /var/log/gunicorn/
 RUN mkdir /var/run/gunicorn/ && chown -R web:web /var/run/gunicorn/
+RUN mkdir $HOME/static && chown -R web:web $HOME/static
 
 WORKDIR $HOME
 
