@@ -15,7 +15,6 @@ RUN pip install -r requirements.txt
 
 COPY ./ .
 COPY ./entrypoint.sh /usr/local/bin
-RUN python manage.py collectstatic
 
 USER web
 
