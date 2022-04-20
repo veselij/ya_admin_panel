@@ -14,7 +14,7 @@ echo "Apply migrations, cerate super user and collectstatic"
 python manage.py migrate --fake movies
 python manage.py migrate --fake-initial
 python manage.py createsuperuser --noinput
-python manage.py collectstatic
+python manage.py collectstatic --noinput
 
 
 echo "Migrate data from sqlite"
