@@ -111,3 +111,6 @@ msgstr "произведения"
 #: movies/models.py:122
 msgid "role"
 msgstr "роль"
+
+msgid "subscriptions"
+msgstr "подписки"
