@@ -14,9 +14,10 @@ class MoviesApiMixin:
 
     def get_queryset(self):
         return self.model.objects.prefetch_related(
-            "genres", "persons",
+            "genres", "persons", "subscriptions",
         ).values("id", "title", "description", "creation_date", "rating", "type").annotate(
             genres=ArrayAgg("genres__name", distinct=True),
+            subscriptions=ArrayAgg("subscriptions__name", distinct=True),
             actors=ArrayAgg("persons__full_name", distinct=True, filter=Q(personfilmwork__role=Roles.actor)),
             directors=ArrayAgg("persons__full_name", distinct=True, filter=Q(personfilmwork__role=Roles.director)),
             writers=ArrayAgg("persons__full_name", distinct=True, filter=Q(personfilmwork__role=Roles.writer)),

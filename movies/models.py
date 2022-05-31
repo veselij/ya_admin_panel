@@ -53,6 +53,26 @@ class Genre(UUIDMixin, TimeStampedMixin):
         return self.name
 
 
+class Subscription(UUIDMixin, TimeStampedMixin):
+    """Film subscription model."""
+
+    name = models.CharField(_("name"), max_length=255)
+    description = models.TextField(_("description"), blank=True)
+
+    class Meta:
+        db_table = "content\".\"subscription"
+        verbose_name = _("subscription")
+        verbose_name_plural = _("subscriptions")
+
+    def __str__(self) -> str:
+        """Override default.
+
+        Returns:
+            subscription name.
+        """
+        return self.name
+
+
 class Person(UUIDMixin, TimeStampedMixin):
     """Model for filmwork persons."""
 
@@ -83,6 +103,7 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     type = models.CharField(_("type"), choices=FilmType.choices, max_length=7)
     genres = models.ManyToManyField(Genre, through="GenreFilmwork")
     persons = models.ManyToManyField(Person, through="PersonFilmwork")
+    subscriptions = models.ManyToManyField(Subscription, through="SubscriptionFilmwork")
 
     class Meta:
         db_table = "content\".\"film_work"
@@ -115,6 +136,24 @@ class GenreFilmwork(UUIDMixin):
 
     def __str__(self):
         return self.genre.name
+
+
+class SubscriptionFilmwork(UUIDMixin):
+    """Class model represents relations many to many between subscription and filmwork models."""
+
+    film_work = models.ForeignKey("Filmwork", on_delete=models.CASCADE)
+    subscription = models.ForeignKey("Subscription", on_delete=models.CASCADE, verbose_name=_("subscription"))
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "content\".\"subscription_film_work"
+        constraints = [models.UniqueConstraint(fields=["film_work", "subscription"], name="film_work_subscription_idx")]
+        indexes = [models.Index(fields=("film_work", "subscription"), name="film_work_subsription_idx")]
+        verbose_name = _("subscription")
+        verbose_name_plural = _("subscriptions")
+
+    def __str__(self):
+        return self.subscription.name
 
 
 class PersonFilmwork(UUIDMixin):
