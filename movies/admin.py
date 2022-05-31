@@ -48,7 +48,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 class FilmworkAdmin(admin.ModelAdmin):
     """Admin class for filmwork with list to display, search and filters."""
 
-    inlines = (GenreFilmworkInline, PersonFilmworkInline)
+    inlines = (GenreFilmworkInline, PersonFilmworkInline, SubscriptionFilmworkInline)
     list_display = ("title", "type", "creation_date", "rating", "film_genres", "film_directors", "film_writers", "film_subscriptions")
     list_filter = ("type",)
     search_fields = ("title", "description", "id")
