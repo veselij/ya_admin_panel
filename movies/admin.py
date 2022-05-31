@@ -2,13 +2,20 @@
 from django.contrib import admin
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
-from movies.models import Filmwork, Genre, GenreFilmwork, Person, PersonFilmwork
+from movies.models import Filmwork, Genre, GenreFilmwork, Person, PersonFilmwork, Subscription, SubscriptionFilmwork
 
 
 class GenreFilmworkInline(admin.TabularInline):
     """Inline class for film genre changing."""
 
     model = GenreFilmwork
+    extra = 0
+
+
+class SubscriptionFilmworkInline(admin.TabularInline):
+    """Inline class for film Subscription changing."""
+
+    model = SubscriptionFilmwork
     extra = 0
 
 
@@ -29,12 +36,20 @@ class GenreAdmin(admin.ModelAdmin):
     search_fields = ("name", "description", "id")
 
 
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    """Admin class for Subscription with list to display and search."""
+
+    list_display = ("name", )
+    search_fields = ("name", "description", "id")
+
+
 @admin.register(Filmwork)
 class FilmworkAdmin(admin.ModelAdmin):
     """Admin class for filmwork with list to display, search and filters."""
 
     inlines = (GenreFilmworkInline, PersonFilmworkInline)
-    list_display = ("title", "type", "creation_date", "rating", "film_genres", "film_directors", "film_writers")
+    list_display = ("title", "type", "creation_date", "rating", "film_genres", "film_directors", "film_writers", "film_subscriptions")
     list_filter = ("type",)
     search_fields = ("title", "description", "id")
     save_on_top = True
@@ -42,6 +57,10 @@ class FilmworkAdmin(admin.ModelAdmin):
     @admin.display(description=_("FILM_GENRES"))
     def film_genres(self, genres):
         return ",".join([genre.name for genre in genres.genres.all()])
+
+    @admin.display(description=_("FILM_SUBSCRIPTIONS"))
+    def film_subscriptions(self, subscriptions):
+        return ",".join([subscription.name for subscription in subscriptions.genres.all()])
 
     @admin.display(description=_("FILM_DIRECTORS"))
     def film_directors(self, directors):
@@ -57,6 +76,7 @@ class FilmworkAdmin(admin.ModelAdmin):
         writers = Person.objects.filter(personfilmwork__role="writer").order_by("full_name")
         return qs.prefetch_related(
             Prefetch("genres", queryset=Genre.objects.order_by('name')),
+            Prefetch("subscriptions", queryset=Subscription.objects.order_by('name')),
             Prefetch("persons", queryset=directors, to_attr="directors"),
             Prefetch("persons", queryset=writers, to_attr="writers"),
         )
