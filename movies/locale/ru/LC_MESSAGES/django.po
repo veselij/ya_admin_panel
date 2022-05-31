@@ -24,6 +24,9 @@ msgstr ""
 msgid "FILM_GENRES"
 msgstr "жанры"
 
+msgid "FILM_SUBSCRIPTIONS"
+msgstr "подписки"
+
 #: movies/admin.py:43
 msgid "FILM_DIRECTORS"
 msgstr "режисеры"
@@ -114,3 +117,6 @@ msgstr "роль"
 
 msgid "subscriptions"
 msgstr "подписки"
+
+msgid "subscription"
+msgstr "подписка"
