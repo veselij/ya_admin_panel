@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
 
     "movies.apps.MoviesConfig",
+    "billing.apps.BillingConfig",
 ]
 
 MIDDLEWARE = [
@@ -116,3 +117,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOCALE_PATH = ["movies/locale"]
+
+from dotenv import load_dotenv
+
+load_dotenv()
