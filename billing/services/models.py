@@ -56,3 +56,12 @@ class UserSubscription:
     active: bool = False
     last_card_digits: int = 0
     auto_pay_id: str | None = None
+
+
+@dataclass(frozen=True)
+class NotificationMessage:
+    notification_name: str
+    user_id: str
+    template_id: str | None
+    content_id: str | None
+    content_value: str | None
