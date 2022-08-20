@@ -1,18 +1,20 @@
 """Config settings."""
+import logging
 import os
 from pathlib import Path
 
 from split_settings.tools import include
 
-
 include(
     "components/database.py",
 )
 
+logger = logging.getLogger(__name__)
+
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = os.environ.get("SECRET_KEY", "test_key")
 
 # SECURITY WARNING: don"t run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", False) == "True"
@@ -31,9 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "debug_toolbar",
-
     "movies.apps.MoviesConfig",
     "billing.apps.BillingConfig",
 ]
@@ -54,7 +54,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [ BASE_DIR / "templates" ],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -117,6 +117,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOCALE_PATH = ["movies/locale"]
+
+# notification settings
+NOTIFICATION_ENABLED = False
+NOTIFICATION_TEMPLATE = ""
+NOTIFICATION_NAME = ""
+NOTIFICATION_QUEUE = ""
+NOTIFICATION_HOST = ""
 
 from dotenv import load_dotenv
 
