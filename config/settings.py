@@ -125,6 +125,10 @@ NOTIFICATION_NAME = ""
 NOTIFICATION_QUEUE = ""
 NOTIFICATION_HOST = ""
 
+# auth settings
+AUTH_URL = ""
+AUTH_URL_ADD_ROLE = ""
+
 from dotenv import load_dotenv
 
 load_dotenv()
