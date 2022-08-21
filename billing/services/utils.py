@@ -1,10 +1,15 @@
 import json
 from contextlib import contextmanager
 from dataclasses import asdict
+from urllib.parse import urljoin
 
 import pika
+import requests
+from requests import ConnectionError, ConnectTimeout, HTTPError
 
 from billing.services.models import NotificationMessage
+from billing.utils.backoff import backoff
+from billing.utils.exceptions import RetryExceptionError
 from config import settings
 
 
@@ -44,5 +49,21 @@ def send_notification(user_id: str, content_id: str, content_value: str):
     )
 
 
+@backoff(
+    settings.logger,
+    start_sleep_time=0.1,
+    factor=2,
+    border_sleep_time=10,
+    max_retray=2,
+)
 def assign_user_role_in_auth(user_id: str, roles_id: str):
-    pass
+    try:
+        r = requests.post(
+            urljoin(settings.AUTH_URL_ADD_ROLE, user_id),
+            data=json.dumps({"roles_id": [roles_id]}),
+        )
+        r.raise_for_status()
+    except (ConnectTimeout, ConnectionError):
+        raise RetryExceptionError("Auth not available")
+    except HTTPError:
+        settings.logger.warning("Role was not assigned")
