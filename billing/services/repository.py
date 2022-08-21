@@ -1,29 +1,30 @@
 from typing import Protocol
 from uuid import UUID
 
+import billing.models as django_models
 from models import Subscription, Transaction, User, UserSubscription
 
 
 class AbstractRepository(Protocol):
     def get_subscription(self, subscription_id: UUID) -> Subscription:
-        ...
+        raise NotImplementedError
 
     def get_user(self, user_id: UUID) -> User:
-        ...
+        raise NotImplementedError
 
     def get_transaction(self, transaction_id: UUID) -> Transaction:
-        ...
+        raise NotImplementedError
 
     def get_user_subscription(
         self, user: User, subscription: Subscription
     ) -> UserSubscription | None:
-        ...
+        raise NotImplementedError
 
     def save_user_subscription(self, user_subscriptions: UserSubscription) -> None:
-        ...
+        raise NotImplementedError
 
     def save_transaction(self, transaction: Transaction) -> None:
-        ...
+        raise NotImplementedError
 
 
 class InMemoryRepository(AbstractRepository):
@@ -70,3 +71,28 @@ class InMemoryRepository(AbstractRepository):
         self.user_subscriptions[
             (user_subscriptions.user.id, user_subscriptions.subscription.id)
         ] = user_subscriptions
+
+
+class DjangoRepository(AbstractRepository):
+    def get_subscription(self, subscription_id: UUID) -> Subscription:
+        return django_models.Subscription.objects.get(id=subscription_id).to_domain()
+
+    def get_transaction(self, transaction_id: UUID) -> Transaction:
+        return django_models.Transaction.objects.get(id=transaction_id).to_domain()
+
+    def get_user(self, user_id: UUID) -> User:
+        return django_models.User.objects.get(id=user_id).to_domain()
+
+    def get_user_subscription(
+        self, user: User, subscription: Subscription
+    ) -> UserSubscription | None:
+        try:
+            return django_models.UserSubscription.objects.get(user=user ,subscription=Subscription).to_domain()
+        except django_models.UserSubscription.DoesNotExist:
+            return None
+
+    def save_transaction(self, transaction: Transaction) -> None:
+        django_models.Transaction.update_from_domain(transaction)
+
+    def save_user_subscription(self, user_subscription: UserSubscription) -> None:
+        django_models.UserSubscription.update_from_domain(user_subscription)
