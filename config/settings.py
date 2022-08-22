@@ -129,6 +129,10 @@ NOTIFICATION_HOST = ""
 AUTH_URL = ""
 AUTH_URL_ADD_ROLE = ""
 
+# yookassa settings
+WEBHOOK_API_URL = ''
+YOOKASSA_TOKEN = ''
+
 from dotenv import load_dotenv
 
 load_dotenv()

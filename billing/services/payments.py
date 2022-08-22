@@ -1,8 +1,12 @@
+import random
 from enum import Enum
+from hashlib import md5
 from typing import Protocol
 from uuid import uuid4
+
 from yookassa import Configuration, Payment, Webhook
 from yookassa.domain.common import ConfirmationType, SecurityHelper
+from yookassa.domain.exceptions.bad_request_error import BadRequestError
 from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
 
 from config import settings
@@ -13,6 +17,7 @@ class Status(Enum):
     pending = "pending"
     succeed = "succeed"
     canceled = "canceled"
+
 
 class PaymentProcessor(Protocol):
     def generate_payment_url(
@@ -33,25 +38,35 @@ class AbstractRequest:
 
 class YookassaPaymentProcessor(PaymentProcessor):
     def __init__(self):
-        Configuration.auth_token = settings.YOOKASSA_TOKEN
+        Configuration.configure_auth_token(
+            token=settings.YOOKASSA_TOKEN
+        )
+
+        self.init_webhooks()
 
     @staticmethod
     def init_webhooks():
-        Webhook.add({
-            "event": WebhookNotificationEventType.PAYMENT_SUCCEEDED,
-            "url": settings.CONFIRMATION_API_URL,
-        })
-        Webhook.add({
-            "event": WebhookNotificationEventType.PAYMENT_CANCELED,
-            "url": settings.CONFIRMATION_API_URL,
-        })
+        for webhook_event in [
+            WebhookNotificationEventType.PAYMENT_SUCCEEDED,
+            WebhookNotificationEventType.PAYMENT_CANCELED
+        ]:
+            idempotence_key = md5((webhook_event + settings.WEBHOOK_API_URL).encode()).hexdigest()
+            try:
+                Webhook.add({
+                    "event": webhook_event,
+                    "url": settings.WEBHOOK_API_URL,
+                }, idempotence_key)
+            except BadRequestError as e:
+                settings.logger.warning(e)
 
     def generate_payment_url(
             self,
             subscription: Subscription,
             payment_details: PaymentDetails,
     ) -> PaymentResult:
-        idempotent_key = str(subscription.id) + str(payment_details.user_id)
+        idempotent_key = md5(
+            (str(subscription.id) + str(payment_details.user_id)).encode()
+        ).hexdigest()
         payment_object = Payment.create({
             "amount": {
                 "value": subscription.price,
@@ -59,20 +74,24 @@ class YookassaPaymentProcessor(PaymentProcessor):
             },
             "confirmation": {
                 "type": ConfirmationType.REDIRECT,
-                "return_url": ""
+                "return_url": payment_details.return_url
+            },
+            "payment_method_data": {
+                "type": "bank_card"
             },
             "capture": True,
-            "description": ""
+            "description": "Оплата подписки {description}".format(description=subscription.description),
+            "save_payment_method": payment_details.auto_pay,
         }, idempotent_key)
 
-        if payment_object.status != Status.pending:
+        if payment_object.status != Status.pending.value:
             settings.logger.warning("Unexpected payment status")
             raise
 
         return PaymentResult(
             id=payment_object.id,
             status=payment_object.status,
-            url=payment_object.confirmation.confiramtion_url,
+            url=payment_object.confirmation.confirmation_url,
         )
 
     def security_check(self, request: AbstractRequest):
@@ -86,15 +105,15 @@ class YookassaPaymentProcessor(PaymentProcessor):
         if notification_object.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
             return PaymentResultUpdate(
                 id=response_object.id,
-                status=Status.succeed,
-                auto_pay_id='',
+                status=Status.succeed.value,
+                auto_pay_id=response_object.payment_method.id,
                 last_card_digits=response_object.payment_method.card.last4,
             )
         elif notification_object.event == WebhookNotificationEventType.PAYMENT_CANCELED:
             return PaymentResultUpdate(
                 id=response_object.id,
-                status=Status.canceled,
-                auto_pay_id='',
+                status=Status.canceled.value,
+                auto_pay_id=response_object.payment_method.id,
                 last_card_digits=response_object.payment_method.card.last4,
             )
         else:
