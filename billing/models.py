@@ -19,7 +19,6 @@ class Subscription(UUIDMixin, TimeStampedMixin):
 
     class Meta:
         db_table = "billing\".\"subscription"
-        indexes = [models.Index(fields=("price", "period_days"), name="subsription_idx")]
         verbose_name = _("subscription")
         verbose_name_plural = _("subscriptions")
 
@@ -54,9 +53,8 @@ class Transaction(UUIDMixin, TimeStampedMixin):
 
     class Meta:
         db_table = "billing\".\"subscription"
-        indexes = [models.Index(fields=("price", "period_days"), name="transaction_idx")]
-        verbose_name = _("subscription")
-        verbose_name_plural = _("subscriptions")
+        verbose_name = _("transaction")
+        verbose_name_plural = _("transactions")
 
     def to_domain(self):
         return service_models.Transaction(
@@ -68,12 +66,9 @@ class Transaction(UUIDMixin, TimeStampedMixin):
 
     @staticmethod
     def update_from_domain(transaction: service_models.Transaction):
-        try:
-            tr_object = Transaction.objects.get(transaction.id)
-        except Transaction.DoesNotExist:
-            tr_object = Transaction(id=transaction.id)
-        tr_object.user = transaction.user
-        tr_object.subscription = transaction.subscription
+        tr_object = Transaction.objects.get_or_create(transaction.id)
+        tr_object.user = User.objects.get_or_create(transaction.user.id)
+        tr_object.subscription = Subscription.objects.get_or_create(transaction.subscription.id)
         tr_object.status = transaction.status
         tr_object.save()
 
@@ -107,12 +102,9 @@ class UserSubscription(UUIDMixin, TimeStampedMixin):
 
     @staticmethod
     def update_from_domain(user_subscription: service_models.UserSubscription):
-        try:
-            us_object = UserSubscription.objects.get(user_subscription.id)
-        except UserSubscription.DoesNotExist:
-            us_object = UserSubscription(id=user_subscription.id)
-        us_object.user = user_subscription.user
-        us_object.subscription = user_subscription.subscription
+        us_object = UserSubscription.objects.get_or_create(user_subscription.id)
+        us_object.user = User.objects.get_or_create(user_subscription.user.id)
+        us_object.subscription = Subscription.objects.get_or_create(user_subscription.subscription.id)
         us_object.auto_pay = user_subscription.auto_pay
         us_object.auto_pay_id = user_subscription.auto_pay_id
         us_object.active = user_subscription.active

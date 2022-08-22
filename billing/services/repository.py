@@ -2,7 +2,14 @@ from typing import Protocol
 from uuid import UUID
 
 import billing.models as django_models
+from exceptions import (
+    UserDoesNotExist,
+    UserSubscriptionDoesNotExist,
+    SubscriptionDoesNotExist,
+    TransactionDoesNotExist,
+)
 from models import Subscription, Transaction, User, UserSubscription
+from utils import exception_handler
 
 
 class AbstractRepository(Protocol):
@@ -74,15 +81,31 @@ class InMemoryRepository(AbstractRepository):
 
 
 class DjangoRepository(AbstractRepository):
+    @exception_handler(
+        exception_cls=django_models.Subscription.DoesNotExist,
+        raises_exception_cls=SubscriptionDoesNotExist,
+    )
     def get_subscription(self, subscription_id: UUID) -> Subscription:
         return django_models.Subscription.objects.get(id=subscription_id).to_domain()
 
+    @exception_handler(
+        exception_cls=django_models.Transaction.DoesNotExist,
+        raises_exception_cls=TransactionDoesNotExist,
+    )
     def get_transaction(self, transaction_id: UUID) -> Transaction:
         return django_models.Transaction.objects.get(id=transaction_id).to_domain()
 
+    @exception_handler(
+        exception_cls=django_models.User.DoesNotExist,
+        raises_exception_cls=UserDoesNotExist,
+    )
     def get_user(self, user_id: UUID) -> User:
         return django_models.User.objects.get(id=user_id).to_domain()
 
+    @exception_handler(
+        exception_cls=django_models.UserSubscription.DoesNotExist,
+        raises_exception_cls=UserSubscriptionDoesNotExist,
+    )
     def get_user_subscription(
         self, user: User, subscription: Subscription
     ) -> UserSubscription | None:
