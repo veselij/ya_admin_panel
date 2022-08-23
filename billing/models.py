@@ -52,7 +52,7 @@ class Transaction(UUIDMixin, TimeStampedMixin):
     status = models.TextField(_('status'), choices=Status)
 
     class Meta:
-        db_table = "billing\".\"subscription"
+        db_table = "billing\".\"transaction"
         verbose_name = _("transaction")
         verbose_name_plural = _("transactions")
 
