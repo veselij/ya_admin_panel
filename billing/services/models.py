@@ -28,6 +28,7 @@ class PaymentResultUpdate:
 @dataclass(frozen=True)
 class Subscription:
     id: UUID
+    name: str
     price: int
     period_days: int
     description: str

@@ -57,6 +57,8 @@ class Subscription(UUIDMixin, TimeStampedMixin):
     """Film subscription model."""
 
     name = models.CharField(_("name"), max_length=255)
+    price = models.IntegerField(_("price"), max_length=16)
+    period_days = models.IntegerField(_("period"), max_length=16)
     description = models.TextField(_("description"), blank=True)
 
     class Meta:

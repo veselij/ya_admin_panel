@@ -1,6 +1,7 @@
 import json
 from contextlib import contextmanager
 from dataclasses import asdict
+from functools import wraps
 from urllib.parse import urljoin
 
 import pika
@@ -67,3 +68,19 @@ def assign_user_role_in_auth(user_id: str, roles_id: str):
         raise RetryExceptionError("Auth not available")
     except HTTPError:
         settings.logger.warning("Role was not assigned")
+
+
+def exception_handler(exception_cls: Type[Exception], raises_exception_cls: Type[Exception]):
+    def decorator(func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exception_cls as e:
+                raise raises_exception_cls() from e
+            except Exception as e:
+                raise exception_cls() from e
+
+        return inner
+
+    return decorator
