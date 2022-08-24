@@ -12,7 +12,7 @@ def initialize_payment(
     repository: AbstractRepository,
 ) -> PaymentResult:
     subscription = repository.get_subscription(payment_details.subscription_id)
-    payment_result = payment_processor.generate_payment_url(subscription)
+    payment_result = payment_processor.generate_payment_url(subscription, payment_details)
 
     transaction_manager = TransactionManager(repository)
     transaction = transaction_manager.create_transaction(

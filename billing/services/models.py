@@ -8,6 +8,7 @@ class PaymentDetails:
     user_id: UUID
     subscription_id: UUID
     auto_pay: bool
+    return_url: str
 
 
 @dataclass(frozen=True)
