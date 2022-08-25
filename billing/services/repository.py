@@ -2,14 +2,14 @@ from typing import Protocol
 from uuid import UUID
 
 import billing.models as django_models
-from exceptions import (
-    UserDoesNotExist,
-    UserSubscriptionDoesNotExist,
+from billing.services.exceptions import (
     SubscriptionDoesNotExist,
     TransactionDoesNotExist,
+    UserDoesNotExist,
+    UserSubscriptionDoesNotExist,
 )
-from models import Subscription, Transaction, User, UserSubscription
-from utils import exception_handler
+from billing.services.models import Subscription, Transaction, User, UserSubscription
+from billing.services.utils import exception_handler
 
 
 class AbstractRepository(Protocol):
@@ -54,6 +54,7 @@ class InMemoryRepository(AbstractRepository):
         subscriptions: dict[UUID, Subscription] = {
             UUID("bb8a9bbd-9d6b-435d-bcff-13685d7796d6"): Subscription(
                 id=UUID("bb8a9bbd-9d6b-435d-bcff-13685d7796d6"),
+                name="Test subscriptin",
                 price=100,
                 period_days=30,
                 description="Test month subscriptions",
@@ -100,7 +101,8 @@ class DjangoRepository(AbstractRepository):
         raises_exception_cls=UserDoesNotExist,
     )
     def get_user(self, user_id: UUID) -> User:
-        return django_models.User.objects.get(id=user_id).to_domain()
+        user, _ = django_models.User.objects.get_or_create(id=user_id)
+        return user.to_domain()
 
     @exception_handler(
         exception_cls=django_models.UserSubscription.DoesNotExist,
@@ -110,7 +112,9 @@ class DjangoRepository(AbstractRepository):
         self, user: User, subscription: Subscription
     ) -> UserSubscription | None:
         try:
-            return django_models.UserSubscription.objects.get(user=user ,subscription=Subscription).to_domain()
+            return django_models.UserSubscription.objects.get(
+                user_id=user.id, subscription_id=subscription.id
+            ).to_domain()
         except django_models.UserSubscription.DoesNotExist:
             return None
 

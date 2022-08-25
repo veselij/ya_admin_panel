@@ -1,9 +1,10 @@
-from models import PaymentDetails, PaymentResult, PaymentResultUpdate
-from payments import PaymentProcessor, Status
-from repository import AbstractRepository
-from subscriptions import UserSubscriptionManager
-from transactions import TransactionManager
-from utils import assign_user_role_in_auth, send_notification
+from billing.services.exceptions import PaymentProcessorNotAvailable
+from billing.services.models import PaymentDetails, PaymentResponse, PaymentResult
+from billing.services.payments import PaymentProcessor, Status
+from billing.services.repository import AbstractRepository
+from billing.services.subscriptions import UserSubscriptionManager
+from billing.services.transactions import TransactionManager
+from billing.services.utils import assign_user_role_in_auth, send_notification
 
 
 def initialize_payment(
@@ -12,7 +13,11 @@ def initialize_payment(
     repository: AbstractRepository,
 ) -> PaymentResult:
     subscription = repository.get_subscription(payment_details.subscription_id)
-    payment_result = payment_processor.generate_payment_url(subscription, payment_details)
+    payment_result = payment_processor.generate_payment_url(
+        subscription, payment_details
+    )
+    if not payment_result:
+        raise PaymentProcessorNotAvailable
 
     transaction_manager = TransactionManager(repository)
     transaction = transaction_manager.create_transaction(
@@ -27,7 +32,7 @@ def initialize_payment(
 
 
 def process_post_payment_update(
-    payment_update: PaymentResultUpdate,
+    payment_update: PaymentResponse,
     repository: AbstractRepository,
 ) -> None:
     transaction_manager = TransactionManager(repository)

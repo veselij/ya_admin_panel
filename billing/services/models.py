@@ -9,6 +9,7 @@ class PaymentDetails:
     subscription_id: UUID
     auto_pay: bool
     return_url: str
+    idempotent_key: UUID
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,7 @@ class PaymentResult:
 
 
 @dataclass(frozen=True)
-class PaymentResultUpdate:
+class PaymentResponse:
     id: str
     status: str
     auto_pay_id: str
@@ -55,7 +56,6 @@ class UserSubscription:
     subscription: Subscription
     auto_pay: bool
     subscription_valid_to: dt.datetime = dt.datetime(year=2000, month=1, day=1)
-    active: bool = False
     last_card_digits: int = 0
     auto_pay_id: str | None = None
 
