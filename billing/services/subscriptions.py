@@ -1,7 +1,7 @@
 import datetime as dt
 from uuid import uuid4
 
-from billing.services.models import Subscription, Transaction, UserSubscription
+from billing.services.models import Subscription, Transaction, User, UserSubscription
 from billing.services.repository import AbstractRepository
 
 
@@ -32,7 +32,6 @@ class UserSubscriptionManager:
     def update_user_subscription(
         self,
         transaction: Transaction,
-        active: bool,
         auto_pay_id: str,
         last_card_digits: int,
     ) -> None:
@@ -51,6 +50,17 @@ class UserSubscriptionManager:
             user_subscription, transaction.subscription
         )
 
+        self.repository.save_user_subscription(user_subscription)
+
+    def cancel_user_subscription(self, user: User, subscription: Subscription) -> None:
+        user_subscription = self.repository.get_user_subscription(user, subscription)
+        if not user_subscription:
+            raise KeyError(
+                "User subscription for user %s with subscription %s does not exist",
+                user.id,
+                subscription.id,
+            )
+        user_subscription.auto_pay = False
         self.repository.save_user_subscription(user_subscription)
 
 
