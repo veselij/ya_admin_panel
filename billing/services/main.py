@@ -1,5 +1,10 @@
 from billing.services.exceptions import PaymentProcessorNotAvailable
-from billing.services.models import PaymentDetails, PaymentResponse, PaymentResult
+from billing.services.models import (
+    CancelationDetails,
+    PaymentDetails,
+    PaymentResponse,
+    PaymentResult,
+)
 from billing.services.payments import PaymentProcessor, Status
 from billing.services.repository import AbstractRepository
 from billing.services.subscriptions import UserSubscriptionManager
@@ -44,7 +49,6 @@ def process_post_payment_update(
         user_subscription_manager = UserSubscriptionManager(repository)
         user_subscription_manager.update_user_subscription(
             transaction,
-            active=True,
             auto_pay_id=payment_update.auto_pay_id,
             last_card_digits=payment_update.last_card_digits,
         )
@@ -56,3 +60,13 @@ def process_post_payment_update(
             str(transaction.subscription.id),
             transaction.subscription.description,
         )
+
+
+def cancel_subscription(
+    cancelation_details: CancelationDetails, repository: AbstractRepository
+) -> None:
+    user = repository.get_user(cancelation_details.user_id)
+    subscription = repository.get_subscription(cancelation_details.subscription_id)
+
+    user_subscription_manager = UserSubscriptionManager(repository)
+    user_subscription_manager.cancel_user_subscription(user, subscription)

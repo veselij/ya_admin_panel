@@ -4,6 +4,12 @@ from uuid import UUID
 
 
 @dataclass(frozen=True)
+class CancelationDetails:
+    user_id: UUID
+    subscription_id: UUID
+
+
+@dataclass(frozen=True)
 class PaymentDetails:
     user_id: UUID
     subscription_id: UUID
