@@ -10,11 +10,14 @@ from config import settings
 
 
 def check_token(func):
-    def wrapper(request, *args, **kwargs):
-        token = request.get("Authorization", None)
-        if token and verify_token_in_auth(token):
+    def wrapper(self, request, *args, **kwargs):
+        if settings.AUTH_ENABLED:
+            token = request.POST.get("Authorization", None)
+            if token and verify_token_in_auth(token):
+                return func(request, *args, **kwargs)
+            return JsonResponse({}, status=401)
+        else:
             return func(request, *args, **kwargs)
-        return JsonResponse({}, status=401)
 
     return wrapper
 

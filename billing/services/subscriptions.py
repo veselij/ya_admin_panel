@@ -1,8 +1,8 @@
 import datetime as dt
 from uuid import uuid4
 
-from models import Subscription, Transaction, UserSubscription
-from repository import AbstractRepository
+from billing.services.models import Subscription, Transaction, UserSubscription
+from billing.services.repository import AbstractRepository
 
 
 class UserSubscriptionManager:
@@ -45,7 +45,6 @@ class UserSubscriptionManager:
                 transaction.user.id,
                 transaction.subscription.id,
             )
-        user_subscription.active = active
         user_subscription.auto_pay_id = auto_pay_id
         user_subscription.last_card_digits = last_card_digits
         user_subscription.subscription_valid_to = calculate_vaild_date(

@@ -2,6 +2,7 @@ import json
 from contextlib import contextmanager
 from dataclasses import asdict
 from functools import wraps
+from typing import Type
 from urllib.parse import urljoin
 
 import pika
@@ -58,19 +59,22 @@ def send_notification(user_id: str, content_id: str, content_value: str):
     max_retray=2,
 )
 def assign_user_role_in_auth(user_id: str, roles_id: str):
-    try:
-        r = requests.post(
-            urljoin(settings.AUTH_URL_ADD_ROLE, user_id),
-            data=json.dumps({"roles_id": [roles_id]}),
-        )
-        r.raise_for_status()
-    except (ConnectTimeout, ConnectionError):
-        raise RetryExceptionError("Auth not available")
-    except HTTPError:
-        settings.logger.warning("Role was not assigned")
+    if settings.AUTH_ENABLED:
+        try:
+            r = requests.post(
+                urljoin(settings.AUTH_URL_ADD_ROLE, user_id),
+                data=json.dumps({"roles_id": [roles_id]}),
+            )
+            r.raise_for_status()
+        except (ConnectTimeout, ConnectionError):
+            raise RetryExceptionError("Auth not available")
+        except HTTPError:
+            settings.logger.warning("Role was not assigned")
 
 
-def exception_handler(exception_cls: Type[Exception], raises_exception_cls: Type[Exception]):
+def exception_handler(
+    exception_cls: Type[Exception], raises_exception_cls: Type[Exception]
+):
     def decorator(func):
         @wraps(func)
         def inner(*args, **kwargs):

@@ -5,6 +5,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+import billing.services.models as service_models
+
 
 class Roles(models.TextChoices):
     """Choices for roles."""
@@ -40,7 +42,7 @@ class Genre(UUIDMixin, TimeStampedMixin):
     description = models.TextField(_("description"), blank=True)
 
     class Meta:
-        db_table = "content\".\"genre"
+        db_table = 'content"."genre'
         verbose_name = _("genre")
         verbose_name_plural = _("genres")
 
@@ -57,12 +59,12 @@ class Subscription(UUIDMixin, TimeStampedMixin):
     """Film subscription model."""
 
     name = models.CharField(_("name"), max_length=255)
-    price = models.IntegerField(_("price"), max_length=16)
-    period_days = models.IntegerField(_("period"), max_length=16)
+    price = models.IntegerField(_("price"))
+    period_days = models.IntegerField(_("period"))
     description = models.TextField(_("description"), blank=True)
 
     class Meta:
-        db_table = "content\".\"subscription"
+        db_table = 'content"."subscription'
         verbose_name = _("subscription")
         verbose_name_plural = _("subscriptions")
 
@@ -74,6 +76,15 @@ class Subscription(UUIDMixin, TimeStampedMixin):
         """
         return self.name
 
+    def to_domain(self):
+        return service_models.Subscription(
+            id=self.id,
+            name=self.name,
+            price=self.price,
+            period_days=self.period_days,
+            description=self.description,
+        )
+
 
 class Person(UUIDMixin, TimeStampedMixin):
     """Model for filmwork persons."""
@@ -81,7 +92,7 @@ class Person(UUIDMixin, TimeStampedMixin):
     full_name = models.CharField(_("full_name"), max_length=255)
 
     class Meta:
-        db_table = "content\".\"person"
+        db_table = 'content"."person'
         verbose_name = _("person")
         verbose_name_plural = _("persons")
 
@@ -101,17 +112,25 @@ class Filmwork(UUIDMixin, TimeStampedMixin):
     title = models.CharField(_("title"), max_length=255)
     description = models.TextField(_("description"))
     creation_date = models.DateField(_("creation_date"), blank=True)
-    rating = models.FloatField(_("rating"), blank=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    rating = models.FloatField(
+        _("rating"),
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
     type = models.CharField(_("type"), choices=FilmType.choices, max_length=7)
     genres = models.ManyToManyField(Genre, through="GenreFilmwork")
     persons = models.ManyToManyField(Person, through="PersonFilmwork")
     subscriptions = models.ManyToManyField(Subscription, through="SubscriptionFilmwork")
 
     class Meta:
-        db_table = "content\".\"film_work"
+        db_table = 'content"."film_work'
         verbose_name = _("filmwork")
         verbose_name_plural = _("filmworks")
-        indexes = [models.Index(fields=("creation_date", "rating"), name="film_work_creation_rating_idx")]
+        indexes = [
+            models.Index(
+                fields=("creation_date", "rating"), name="film_work_creation_rating_idx"
+            )
+        ]
 
     def __str__(self) -> str:
         """Override default.
@@ -126,13 +145,21 @@ class GenreFilmwork(UUIDMixin):
     """Class model represents relations many to many between genre and filmwork models."""
 
     film_work = models.ForeignKey("Filmwork", on_delete=models.CASCADE)
-    genre = models.ForeignKey("Genre", on_delete=models.CASCADE, verbose_name=_("genre"))
+    genre = models.ForeignKey(
+        "Genre", on_delete=models.CASCADE, verbose_name=_("genre")
+    )
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "content\".\"genre_film_work"
-        constraints = [models.UniqueConstraint(fields=["film_work", "genre"], name="film_work_genre_idx")]
-        indexes = [models.Index(fields=("film_work", "genre"), name="film_work_genre_idx")]
+        db_table = 'content"."genre_film_work'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["film_work", "genre"], name="film_work_genre_idx"
+            )
+        ]
+        indexes = [
+            models.Index(fields=("film_work", "genre"), name="film_work_genre_idx")
+        ]
         verbose_name = _("genre")
         verbose_name_plural = _("genres")
 
@@ -144,13 +171,23 @@ class SubscriptionFilmwork(UUIDMixin):
     """Class model represents relations many to many between subscription and filmwork models."""
 
     film_work = models.ForeignKey("Filmwork", on_delete=models.CASCADE)
-    subscription = models.ForeignKey("Subscription", on_delete=models.CASCADE, verbose_name=_("subscription"))
+    subscription = models.ForeignKey(
+        "Subscription", on_delete=models.CASCADE, verbose_name=_("subscription")
+    )
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "content\".\"subscription_film_work"
-        constraints = [models.UniqueConstraint(fields=["film_work", "subscription"], name="film_work_subscription_idx")]
-        indexes = [models.Index(fields=("film_work", "subscription"), name="film_work_subsription_idx")]
+        db_table = 'content"."subscription_film_work'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["film_work", "subscription"], name="film_work_subscription_idx"
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=("film_work", "subscription"), name="film_work_subsription_idx"
+            )
+        ]
         verbose_name = _("subscription")
         verbose_name_plural = _("subscriptions")
 
@@ -162,14 +199,24 @@ class PersonFilmwork(UUIDMixin):
     """Class model represents relations between person and filmwork models."""
 
     film_work = models.ForeignKey("Filmwork", on_delete=models.CASCADE)
-    person = models.ForeignKey("Person", on_delete=models.CASCADE, verbose_name=_("person"))
+    person = models.ForeignKey(
+        "Person", on_delete=models.CASCADE, verbose_name=_("person")
+    )
     role = models.TextField(_("role"), choices=Roles.choices, max_length=8, null=True)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "content\".\"person_film_work"
-        constraints = [models.UniqueConstraint(fields=["film_work", "person", "role"], name="film_work_person_role_idx")]
-        indexes = [models.Index(fields=("film_work", "person", "role"), name="film_work_person_role_idx")]
+        db_table = 'content"."person_film_work'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["film_work", "person", "role"], name="film_work_person_role_idx"
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=("film_work", "person", "role"), name="film_work_person_role_idx"
+            )
+        ]
         verbose_name = _("person")
         verbose_name_plural = _("persons")
 

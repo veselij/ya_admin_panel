@@ -1,4 +1,5 @@
 CREATE SCHEMA IF NOT EXISTS content;
+CREATE SCHEMA IF NOT EXISTS billing;
 ALTER ROLE app SET search_path TO content,public;
 
 CREATE TABLE IF NOT EXISTS content.film_work (
@@ -23,6 +24,8 @@ CREATE TABLE IF NOT EXISTS content.genre (
 CREATE TABLE IF NOT EXISTS content.subscription (
     id uuid PRIMARY KEY,
     name TEXT NOT NULL,
+    price INTEGER, 
+    period_days INTEGER,
     description TEXT,
     created timestamp with time zone,
     modified timestamp with time zone

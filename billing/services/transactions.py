@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from models import PaymentDetails, PaymentResult, Transaction, User
-from repository import AbstractRepository
+from billing.services.models import PaymentDetails, PaymentResult, Transaction
+from billing.services.repository import AbstractRepository
 
 
 class TransactionManager:
@@ -12,9 +12,10 @@ class TransactionManager:
         self, payment_details: PaymentDetails, payment_result: PaymentResult
     ) -> Transaction:
         subscription = self.repository.get_subscription(payment_details.subscription_id)
+        user = self.repository.get_user(payment_details.user_id)
         transaction = Transaction(
             id=payment_result.id,
-            user=User(id=payment_details.user_id),
+            user=user,
             subscription=subscription,
             status=payment_result.status,
         )

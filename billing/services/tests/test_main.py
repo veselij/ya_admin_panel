@@ -1,9 +1,8 @@
 from uuid import UUID
 
 import pytest
-
 from main import initialize_payment, process_post_payment_update
-from models import PaymentDetails, PaymentResult, PaymentResultUpdate
+from models import PaymentDetails, PaymentResponse, PaymentResult
 from payments import FakePaymentProcessor, Status
 from repository import AbstractRepository, InMemoryRepository
 
@@ -11,6 +10,7 @@ payment_details = PaymentDetails(
     user_id=UUID("841a4e67-515b-41dd-9ea6-2a4bd35ed6ca"),
     subscription_id=UUID("bb8a9bbd-9d6b-435d-bcff-13685d7796d6"),
     auto_pay=True,
+    return_url="http://return.com",
 )
 
 
@@ -45,7 +45,7 @@ def test_process_post_payment_update():
     repository = InMemoryRepository()
 
     payment_result = init_payment(repository)
-    payment_update = PaymentResultUpdate(
+    payment_update = PaymentResponse(
         id=str(payment_result.id),
         status=Status.succeed.value,
         auto_pay_id="",
@@ -60,5 +60,4 @@ def test_process_post_payment_update():
         updated_transaction.user, updated_transaction.subscription
     )
     assert user_subscription is not None
-    assert user_subscription.active == True
     assert user_subscription.last_card_digits == payment_update.last_card_digits

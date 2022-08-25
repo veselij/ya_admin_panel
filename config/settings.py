@@ -3,11 +3,13 @@ import logging
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from split_settings.tools import include
 
 include(
     "components/database.py",
 )
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +21,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "test_key")
 # SECURITY WARNING: don"t run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", False) == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1"]
-
-if DEBUG:
-    INTERNAL_IPS = ["127.0.0.1"]
+ALLOWED_HOSTS = ["127.0.0.1", "f4c4-176-57-76-217.eu.ngrok.io"]
 
 # Application definition
 
@@ -126,13 +125,17 @@ NOTIFICATION_QUEUE = ""
 NOTIFICATION_HOST = ""
 
 # auth settings
-AUTH_URL = ""
-AUTH_URL_ADD_ROLE = ""
+AUTH_ENABLED = False
+AUTH_HOST = os.environ.get("AUTH_HOST", "localhost")
+AUTH_PORT = int(os.environ.get("AUTH_PORT", 82))
+AUTH_URL = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
+AUTH_URL_ADD_ROLE = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
 
 # yookassa settings
-WEBHOOK_API_URL = ''
-YOOKASSA_TOKEN = ''
+IS_FAKE_PAYMENT_API = False
+WEBHOOK_API_HOST = os.environ.get("WEBHOOK_API_HOST")
+WEBHOOK_API_URL = f"{WEBHOOK_API_HOST}/api/v1/billing/paymentWebhookApi"
+YOOKASSA_TOKEN = os.environ.get("YOOKASSA_TOKEN")
 
-from dotenv import load_dotenv
-
-load_dotenv()
+# URL to redirect user after succefull payment
+AFTER_PAYMENT_URL = "https://f4c4-176-57-76-217.eu.ngrok.io"

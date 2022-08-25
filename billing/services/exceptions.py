@@ -12,3 +12,23 @@ class TransactionDoesNotExist(Exception):
 
 class UserSubscriptionDoesNotExist(Exception):
     pass
+
+
+class PaymentProcessorWebhookFailure(Exception):
+    pass
+
+
+class PaymentProcessorUnknownResponse(Exception):
+    pass
+
+
+class PaymentProcessorNotAvailable(Exception):
+    pass
+
+
+class PaymentProcessorAlreadyPayed(Exception):
+    pass
+
+
+class PaymentProcessorPaymentCanceled(Exception):
+    pass
