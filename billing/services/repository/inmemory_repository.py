@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Generator
 from uuid import UUID
 
@@ -52,5 +52,13 @@ class InMemoryRepository(AbstractRepository):
                 user_subscription.auto_pay
                 and user_subscription.subscription_valid_to.date()
                 == datetime.now().date()
+            ):
+                yield user_subscription
+
+    def get_ovedue_user_subscriptions(self) -> Generator[UserSubscription, None, None]:
+        for user_subscription in self.user_subscriptions.values():
+            if (
+                user_subscription.subscription_valid_to.date()
+                == datetime.now().date() - timedelta(days=1)
             ):
                 yield user_subscription

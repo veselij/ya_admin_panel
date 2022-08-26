@@ -65,3 +65,10 @@ class DjangoRepository(AbstractRepository):
             auto_pay=True, subscription_valid_to__date=timezone.now().date()
         ):
             yield user_subscription.to_domain()
+
+    def get_ovedue_user_subscriptions(self) -> Generator[UserSubscription, None, None]:
+        for user_subscription in django_models.UserSubscription.objects.all().filter(
+            subscription_valid_to__date=timezone.now().date()
+            - timezone.timedelta(days=1)
+        ):
+            yield user_subscription.to_domain()
