@@ -22,7 +22,7 @@ from billing.services.main import (
     process_post_payment_update,
 )
 from billing.services.models import CancelationDetails, PaymentDetails
-from billing.services.repository import DjangoRepository
+from billing.services.repository.django_repositury import DjangoRepository
 from billing.utils.security import check_token
 from config import settings
 
@@ -49,9 +49,9 @@ class InitializePayment(View):
                 user_id=UUID(post_body.get("user_id")),
                 subscription_id=UUID(post_body.get("subscription_id")),
                 auto_pay=bool(int(post_body.get("auto_pay"))),
-                idempotent_key=UUID(post_body.get("idempotent_key")),
-                return_url=settings.AFTER_PAYMENT_URL,
             )
+            idempotent_key = post_body.get("idempotent_key")
+            return_url = settings.AFTER_PAYMENT_URL
         except (KeyError, ValueError) as e:
             settings.logger.exception("Bad request %s", e)
             return JsonResponse(
@@ -62,7 +62,11 @@ class InitializePayment(View):
 
         try:
             result = initialize_payment(
-                payment_processor, payment_details, DjangoRepository()
+                payment_processor,
+                payment_details,
+                DjangoRepository(),
+                return_url,
+                idempotent_key,
             )
         except (
             SubscriptionDoesNotExist,

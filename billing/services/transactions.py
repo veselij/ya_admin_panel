@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from billing.services.models import PaymentDetails, PaymentResult, Transaction
-from billing.services.repository import AbstractRepository
+from billing.services.repository.repository import AbstractRepository
 
 
 class TransactionManager:
