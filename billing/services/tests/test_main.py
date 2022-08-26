@@ -1,63 +1,109 @@
-from uuid import UUID
+from datetime import datetime
 
 import pytest
-from main import initialize_payment, process_post_payment_update
-from models import PaymentDetails, PaymentResponse, PaymentResult
-from payments import FakePaymentProcessor, Status
-from repository import AbstractRepository, InMemoryRepository
 
-payment_details = PaymentDetails(
-    user_id=UUID("841a4e67-515b-41dd-9ea6-2a4bd35ed6ca"),
-    subscription_id=UUID("bb8a9bbd-9d6b-435d-bcff-13685d7796d6"),
-    auto_pay=True,
-    return_url="http://return.com",
+from billing.services.main import (
+    initialize_payment,
+    process_post_payment_update,
+    prolong_subscription,
+)
+from billing.services.models import PaymentResult
+from billing.services.payments.fake_paymentprocessor import FakePaymentProcessor
+from billing.services.repository.inmemory_repository import InMemoryRepository
+from billing.services.repository.repository import AbstractRepository
+from billing.services.tests.data import (
+    payment_details,
+    payment_result,
+    payment_update,
+    return_url,
+    subscription,
+    subscriptions,
+    transaction_id,
+    user,
+    user_confirmed_subscription,
+    user_init_subscription,
+    user_transaction_pending,
+    user_transaction_succ,
 )
 
 
 def init_payment(repository: AbstractRepository) -> PaymentResult:
     payment_processor = FakePaymentProcessor()
-    return initialize_payment(payment_processor, payment_details, repository)
-
-
-def test_initial_payment():
-
-    repository = InMemoryRepository()
-
-    payment_result = init_payment(repository)
-    assert payment_result.status == Status.pending.value
-
-    transaction = repository.get_transaction(payment_result.id)
-    assert transaction.id == payment_result.id
-    assert transaction.status == payment_result.status
-    assert transaction.user.id == payment_details.user_id
-    assert transaction.subscription.id == payment_details.subscription_id
-
-    user_subscription = repository.get_user_subscription(
-        transaction.user, transaction.subscription
+    payment_processor.result_uuid = transaction_id
+    idempotent_key = f"{payment_details.user_id}:{payment_details.subscription_id}"
+    return initialize_payment(
+        payment_processor, payment_details, repository, return_url, idempotent_key
     )
-    assert user_subscription is not None
-    assert user_subscription.user.id == payment_details.user_id
-    assert user_subscription.subscription.id == payment_details.subscription_id
 
 
-def test_process_post_payment_update():
+@pytest.fixture
+def repository():
+    r = InMemoryRepository()
+    r.subscriptions = subscriptions
+    return r
 
-    repository = InMemoryRepository()
 
-    payment_result = init_payment(repository)
-    payment_update = PaymentResponse(
-        id=str(payment_result.id),
-        status=Status.succeed.value,
-        auto_pay_id="",
-        last_card_digits=1234,
+def test_initial_payment(repository):
+
+    pr = init_payment(repository)
+
+    assert pr == payment_result
+    assert (
+        repository.transactions[user_transaction_pending.id] == user_transaction_pending
     )
+    assert (
+        repository.user_subscriptions[
+            (payment_details.user_id, payment_details.subscription_id)
+        ].subscription
+        == subscription
+    )
+    assert (
+        repository.user_subscriptions[
+            (payment_details.user_id, payment_details.subscription_id)
+        ].user
+        == user
+    )
+
+
+def test_process_post_payment_update(repository):
+
+    repository.user_subscriptions[
+        (payment_details.user_id, payment_details.subscription_id)
+    ] = user_init_subscription
+    repository.transactions[user_transaction_pending.id] = user_transaction_pending
 
     process_post_payment_update(payment_update, repository)
-    updated_transaction = repository.get_transaction(payment_result.id)
-    assert updated_transaction.status == Status.succeed.value
 
-    user_subscription = repository.get_user_subscription(
-        updated_transaction.user, updated_transaction.subscription
+    assert (
+        repository.user_subscriptions[
+            (payment_details.user_id, payment_details.subscription_id)
+        ].last_card_digits
+        == user_confirmed_subscription.last_card_digits
     )
-    assert user_subscription is not None
-    assert user_subscription.last_card_digits == payment_update.last_card_digits
+    assert (
+        repository.user_subscriptions[
+            (payment_details.user_id, payment_details.subscription_id)
+        ].subscription_valid_to.date()
+        == user_confirmed_subscription.subscription_valid_to.date()
+    )
+    assert repository.transactions[user_transaction_pending.id] == user_transaction_succ
+
+
+def test_init_prolong_subscription(repository):
+
+    repository.user_subscriptions[
+        (payment_details.user_id, payment_details.subscription_id)
+    ] = user_confirmed_subscription
+    repository.transactions[user_transaction_pending.id] = user_transaction_succ
+    repository.user_subscriptions[
+        (payment_details.user_id, payment_details.subscription_id)
+    ].subscription_valid_to = datetime.now()
+
+    prolong_subscription(FakePaymentProcessor(), repository)
+    assert (
+        repository.transactions[user_transaction_pending.id] == user_transaction_pending
+    )
+
+
+def test_cancel_subscription():
+    pass

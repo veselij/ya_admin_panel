@@ -1,8 +1,9 @@
 import datetime as dt
+from typing import Generator
 from uuid import uuid4
 
 from billing.services.models import Subscription, Transaction, User, UserSubscription
-from billing.services.repository import AbstractRepository
+from billing.services.repository.repository import AbstractRepository
 
 
 class UserSubscriptionManager:
@@ -62,6 +63,9 @@ class UserSubscriptionManager:
             )
         user_subscription.auto_pay = False
         self.repository.save_user_subscription(user_subscription)
+
+    def get_autopay_user_subscription(self) -> Generator[UserSubscription, None, None]:
+        yield from self.repository.get_auto_pay_user_subscriptions()
 
 
 def calculate_vaild_date(

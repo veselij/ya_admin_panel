@@ -1,8 +1,5 @@
-from abc import ABC, abstractmethod
-from enum import Enum
 from hashlib import md5
-from typing import Protocol
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from requests.exceptions import ConnectionError, ConnectTimeout
 from yookassa import Configuration, Payment, Webhook
@@ -24,38 +21,12 @@ from billing.services.models import (
     PaymentResponse,
     PaymentResult,
     Subscription,
+    UserSubscription,
 )
+from billing.services.payments.payments import AbstractRequest, PaymentProcessor, Status
 from billing.utils.backoff import backoff
 from billing.utils.exceptions import RetryExceptionError
 from config import settings
-
-
-class Status(Enum):
-    pending = "pending"
-    succeed = "succeed"
-    canceled = "canceled"
-
-
-class PaymentProcessor(Protocol):
-    def generate_payment_url(
-        self,
-        subscription: Subscription,
-        payment_details: PaymentDetails,
-    ) -> PaymentResult:
-        raise NotImplementedError
-
-    def get_payment_result(self, data: dict) -> PaymentResponse:
-        raise NotImplementedError
-
-
-class AbstractRequest(ABC):
-    @abstractmethod
-    def get_client_ip(self) -> str:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_json_data(self) -> dict:
-        raise NotImplementedError
 
 
 class YookassaPaymentProcessor(PaymentProcessor):
@@ -95,6 +66,8 @@ class YookassaPaymentProcessor(PaymentProcessor):
         self,
         subscription: Subscription,
         payment_details: PaymentDetails,
+        return_url: str,
+        idempotent_key: str,
     ) -> PaymentResult:
         try:
             payment_object = Payment.create(
@@ -102,7 +75,7 @@ class YookassaPaymentProcessor(PaymentProcessor):
                     "amount": {"value": subscription.price, "currency": "RUB"},
                     "confirmation": {
                         "type": ConfirmationType.REDIRECT,
-                        "return_url": payment_details.return_url,
+                        "return_url": return_url,
                     },
                     "payment_method_data": {"type": "bank_card"},
                     "capture": True,
@@ -111,7 +84,7 @@ class YookassaPaymentProcessor(PaymentProcessor):
                     ),
                     "save_payment_method": payment_details.auto_pay,
                 },
-                payment_details.idempotent_key,
+                idempotent_key,
             )
         except (ConnectTimeout, ConnectionError):
             raise RetryExceptionError("Payment provider not available")
@@ -126,6 +99,40 @@ class YookassaPaymentProcessor(PaymentProcessor):
             id=UUID(payment_object.id),
             status=payment_object.status,
             url=payment_object.confirmation.confirmation_url,
+        )
+
+    @backoff(
+        settings.logger,
+        start_sleep_time=0.1,
+        factor=2,
+        border_sleep_time=10,
+        max_retray=2,
+    )
+    def auto_pay_subscription(
+        self, user_subscription: UserSubscription
+    ) -> PaymentResult:
+        try:
+            payment_object = Payment.create(
+                {
+                    "amount": {
+                        "value": user_subscription.subscription.price,
+                        "currency": "RUB",
+                    },
+                    "capture": True,
+                    "payment_method_id": user_subscription.auto_pay_id,
+                    "description": "Авто оплата подписки {0}".format(
+                        user_subscription.subscription.description
+                    ),
+                },
+                f"{user_subscription.user.id}:{user_subscription.subscription.id}",
+            )
+        except (ConnectTimeout, ConnectionError):
+            raise RetryExceptionError("Payment provider not available")
+
+        return PaymentResult(
+            id=UUID(payment_object.id),
+            status=payment_object.status,
+            url="",
         )
 
     def security_check(self, request: AbstractRequest) -> bool:
@@ -147,23 +154,4 @@ class YookassaPaymentProcessor(PaymentProcessor):
             status=status,
             auto_pay_id=response_object.payment_method.id,
             last_card_digits=response_object.payment_method.card.last4,
-        )
-
-
-class FakePaymentProcessor(PaymentProcessor):
-    def generate_payment_url(
-        self,
-        subscription: Subscription,
-        payment_details: PaymentDetails,
-    ) -> PaymentResult:
-        return PaymentResult(
-            id=uuid4(), status=Status.pending.value, url="http://payment.com"
-        )
-
-    def get_payment_result(self, data: dict) -> PaymentResponse:
-        return PaymentResponse(
-            id=data["id"],
-            status=data["status"],
-            auto_pay_id=data["auto_pay_id"],
-            last_card_digits=data["last_card_digits"],
         )

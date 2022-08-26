@@ -5,8 +5,8 @@ from billing.services.models import (
     PaymentResponse,
     PaymentResult,
 )
-from billing.services.payments import PaymentProcessor, Status
-from billing.services.repository import AbstractRepository
+from billing.services.payments.payments import PaymentProcessor, Status
+from billing.services.repository.repository import AbstractRepository
 from billing.services.subscriptions import UserSubscriptionManager
 from billing.services.transactions import TransactionManager
 from billing.services.utils import assign_user_role_in_auth, send_notification
@@ -16,10 +16,12 @@ def initialize_payment(
     payment_processor: PaymentProcessor,
     payment_details: PaymentDetails,
     repository: AbstractRepository,
+    return_url: str,
+    idempotent_key: str,
 ) -> PaymentResult:
     subscription = repository.get_subscription(payment_details.subscription_id)
     payment_result = payment_processor.generate_payment_url(
-        subscription, payment_details
+        subscription, payment_details, return_url, idempotent_key
     )
     if not payment_result:
         raise PaymentProcessorNotAvailable
@@ -70,3 +72,18 @@ def cancel_subscription(
 
     user_subscription_manager = UserSubscriptionManager(repository)
     user_subscription_manager.cancel_user_subscription(user, subscription)
+
+
+def prolong_subscription(
+    payment_processor: PaymentProcessor, repository: AbstractRepository
+):
+    user_subscription_manager = UserSubscriptionManager(repository)
+    transaction_manager = TransactionManager(repository)
+    for user_subscription in user_subscription_manager.get_autopay_user_subscription():
+        payment_result = payment_processor.auto_pay_subscription(user_subscription)
+        payment_details = PaymentDetails(
+            user_id=user_subscription.user.id,
+            subscription_id=user_subscription.subscription.id,
+            auto_pay=True,
+        )
+        transaction_manager.create_transaction(payment_details, payment_result)
