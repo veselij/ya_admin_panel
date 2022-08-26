@@ -129,7 +129,7 @@ AUTH_ENABLED = False
 AUTH_HOST = os.environ.get("AUTH_HOST", "localhost")
 AUTH_PORT = int(os.environ.get("AUTH_PORT", 82))
 AUTH_URL = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
-AUTH_URL_ADD_ROLE = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
+AUTH_URL_ROLE = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
 
 # yookassa settings
 IS_FAKE_PAYMENT_API = False

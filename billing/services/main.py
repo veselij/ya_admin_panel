@@ -9,7 +9,11 @@ from billing.services.payments.payments import PaymentProcessor, Status
 from billing.services.repository.repository import AbstractRepository
 from billing.services.subscriptions import UserSubscriptionManager
 from billing.services.transactions import TransactionManager
-from billing.services.utils import assign_user_role_in_auth, send_notification
+from billing.services.utils import (
+    assign_user_role_in_auth,
+    delete_user_role_in_auth,
+    send_notification,
+)
 
 
 def initialize_payment(
@@ -55,7 +59,8 @@ def process_post_payment_update(
             last_card_digits=payment_update.last_card_digits,
         )
         assign_user_role_in_auth(
-            str(transaction.user.id), str(transaction.subscription.id)
+            str(transaction.user.id),
+            str(transaction.subscription.id),
         )
         send_notification(
             str(transaction.user.id),
@@ -87,3 +92,12 @@ def prolong_subscription(
             auto_pay=True,
         )
         transaction_manager.create_transaction(payment_details, payment_result)
+
+
+def delete_user_subscription_in_auth(repository: AbstractRepository):
+    user_subscription_manager = UserSubscriptionManager(repository)
+    for user_subscription in user_subscription_manager.get_ovedue_user_subscriptions():
+        delete_user_role_in_auth(
+            str(user_subscription.user.id),
+            str(user_subscription.subscription.id),
+        )

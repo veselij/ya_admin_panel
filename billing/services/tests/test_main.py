@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 
 from billing.services.main import (
+    cancel_subscription,
     initialize_payment,
     process_post_payment_update,
     prolong_subscription,
@@ -12,6 +13,7 @@ from billing.services.payments.fake_paymentprocessor import FakePaymentProcessor
 from billing.services.repository.inmemory_repository import InMemoryRepository
 from billing.services.repository.repository import AbstractRepository
 from billing.services.tests.data import (
+    cancelation_details,
     payment_details,
     payment_result,
     payment_update,
@@ -105,5 +107,17 @@ def test_init_prolong_subscription(repository):
     )
 
 
-def test_cancel_subscription():
-    pass
+def test_cancel_subscription(repository):
+    repository.user_subscriptions[
+        (payment_details.user_id, payment_details.subscription_id)
+    ] = user_confirmed_subscription
+    repository.transactions[user_transaction_pending.id] = user_transaction_succ
+
+    cancel_subscription(cancelation_details, repository)
+
+    assert (
+        repository.user_subscriptions[
+            (cancelation_details.user_id, cancelation_details.subscription_id)
+        ].auto_pay
+        == False
+    )

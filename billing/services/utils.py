@@ -62,7 +62,7 @@ def assign_user_role_in_auth(user_id: str, roles_id: str):
     if settings.AUTH_ENABLED:
         try:
             r = requests.post(
-                urljoin(settings.AUTH_URL_ADD_ROLE, user_id),
+                urljoin(settings.AUTH_URL_ROLE, user_id),
                 data=json.dumps({"roles_id": [roles_id]}),
             )
             r.raise_for_status()
@@ -70,6 +70,27 @@ def assign_user_role_in_auth(user_id: str, roles_id: str):
             raise RetryExceptionError("Auth not available")
         except HTTPError:
             settings.logger.warning("Role was not assigned")
+
+
+@backoff(
+    settings.logger,
+    start_sleep_time=0.1,
+    factor=2,
+    border_sleep_time=10,
+    max_retray=2,
+)
+def delete_user_role_in_auth(user_id: str, roles_id: str):
+    if settings.AUTH_ENABLED:
+        try:
+            r = requests.delete(
+                urljoin(settings.AUTH_URL_ROLE, user_id),
+                data=json.dumps({"roles_id": [roles_id]}),
+            )
+            r.raise_for_status()
+        except (ConnectTimeout, ConnectionError):
+            raise RetryExceptionError("Auth not available")
+        except HTTPError:
+            settings.logger.warning("Role was not deleted")
 
 
 def exception_handler(

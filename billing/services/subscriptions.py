@@ -67,6 +67,9 @@ class UserSubscriptionManager:
     def get_autopay_user_subscription(self) -> Generator[UserSubscription, None, None]:
         yield from self.repository.get_auto_pay_user_subscriptions()
 
+    def get_ovedue_user_subscriptions(self) -> Generator[UserSubscription, None, None]:
+        yield from self.repository.get_ovedue_user_subscriptions()
+
 
 def calculate_vaild_date(
     user_subscription: UserSubscription, subscription: Subscription

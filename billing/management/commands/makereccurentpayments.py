@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 
 from billing.services.main import prolong_subscription
-from billing.services.payments import YookassaPaymentProcessor
-from billing.services.repository import DjangoRepository
+from billing.services.payments.yakassa_paymentprocessor import YookassaPaymentProcessor
+from billing.services.repository.django_repositury import DjangoRepository
 
 
 class Command(BaseCommand):

@@ -29,3 +29,6 @@ class AbstractRepository(Protocol):
         self,
     ) -> Generator[UserSubscription, None, None]:
         raise NotImplementedError
+
+    def get_ovedue_user_subscriptions(self) -> Generator[UserSubscription, None, None]:
+        raise NotImplementedError

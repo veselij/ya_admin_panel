@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from billing.services.models import (
+    CancelationDetails,
     PaymentDetails,
     PaymentResponse,
     PaymentResult,
@@ -32,6 +33,10 @@ payment_update = PaymentResponse(
 
 payment_result = PaymentResult(
     id=transaction_id, status=Status.pending.value, url="http://payment.com"
+)
+
+cancelation_details = CancelationDetails(
+    user_id=payment_details.user_id, subscription_id=payment_details.subscription_id
 )
 
 subscription = Subscription(
