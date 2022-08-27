@@ -16,7 +16,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "test_key")
 
 DEBUG = os.environ.get("DEBUG", False) == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "b8d4-176-57-76-217.eu.ngrok.io", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "nginx"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -96,21 +96,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOCALE_PATH = ["movies/locale"]
 
 # notification settings
-NOTIFICATION_ENABLED = False
+NOTIFICATION_ENABLED = os.environ.get("NOTIFICATION_ENABLED", False) == "True"
 NOTIFICATION_TEMPLATE = "NOTIFICATION_TEMPLATE"
 NOTIFICATION_NAME = "NOTIFICATION"
 NOTIFICATION_QUEUE = "NOTIFICATION_QUEUE"
 NOTIFICATION_HOST = os.environ.get("NOTIFICATION_HOST")
 
 # auth settings
-AUTH_ENABLED = False
+AUTH_ENABLED = os.environ.get("AUTH_ENABLED", False) == "True"
 AUTH_HOST = os.environ.get("AUTH_HOST", "localhost")
 AUTH_PORT = int(os.environ.get("AUTH_PORT", 82))
 AUTH_URL = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
 AUTH_URL_ROLE = "https://{AUTH_HOST}:{AUTH_PORT}/api/v1/user/{USER_ID}"
 
 # yookassa settings
-IS_FAKE_PAYMENT_API = False
+IS_FAKE_PAYMENT_API = os.environ.get("IS_FAKE_PAYMENT_API", False) == "True"
 WEBHOOK_API_HOST = os.environ.get("WEBHOOK_API_HOST")
 WEBHOOK_API_URL = f"{WEBHOOK_API_HOST}/api/v1/billing/paymentWebhookApi"
 YOOKASSA_TOKEN = os.environ.get("YOOKASSA_TOKEN")

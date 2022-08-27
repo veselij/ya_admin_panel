@@ -8,6 +8,6 @@ DATABASES = {
         "PASSWORD": os.environ.get("PGPASSWORD"),
         "HOST": os.environ.get("PG_HOST", "127.0.0.1"),
         "PORT": os.environ.get("PG_PORT", 5432),
-        "OPTIONS": {"options": "-c search_path=public,content"},
+        "OPTIONS": {"options": "-c search_path=public,content,billing"},
     }
 }

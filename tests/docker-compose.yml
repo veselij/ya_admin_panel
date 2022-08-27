@@ -1,0 +1,61 @@
+version: '3.0'
+
+services:
+  admin_panel:
+    container_name: admin_panel
+    build: 
+      context: ../
+    networks:
+      - backend_nw
+    volumes:
+      - code:/code
+    env_file:
+      - .admin_panel.env
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+  db:
+    image: postgres:13
+    container_name: pg_server
+    networks:
+      - backend_nw
+    env_file:
+      - ./.postgres.env
+    expose:
+      - 5432
+  nginx:
+    image: nginx:1.21.6
+    depends_on:
+      - admin_panel
+    ports:
+      - 80:80
+    networks:
+      - backend_nw
+    volumes:
+      - code:/data:ro
+      - ../deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../deploy/nginx/configs:/etc/nginx/conf.d/:ro
+  tests:
+    container_name: admin_test
+    build:
+      context: ../
+      dockerfile: tests/Dockerfile
+    volumes:
+      - code_test:/code_test
+    env_file:
+      - .admin_panel.env
+    networks:
+      - backend_nw
+    depends_on:
+      - admin_panel
+
+
+
+volumes:
+  code:
+  code_test:
+
+networks:
+  backend_nw:
+    driver: bridge
