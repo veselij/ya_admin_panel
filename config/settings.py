@@ -1,4 +1,3 @@
-"""Config settings."""
 import logging
 import os
 from pathlib import Path
@@ -6,24 +5,18 @@ from pathlib import Path
 from dotenv import load_dotenv
 from split_settings.tools import include
 
-include(
-    "components/database.py",
-)
+include("components/database.py", "components/logging.py")
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "test_key")
 
-# SECURITY WARNING: don"t run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", False) == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "f4c4-176-57-76-217.eu.ngrok.io"]
-
-# Application definition
+ALLOWED_HOSTS = ["127.0.0.1", "b8d4-176-57-76-217.eu.ngrok.io", "localhost"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -68,10 +61,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -87,10 +76,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
 LANGUAGE_CODE = "ru-RU"
 
 TIME_ZONE = "UTC"
@@ -101,17 +86,10 @@ USE_L10N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
 STATIC_URL = "/static/"
 STATIC_ROOT = "static"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -119,10 +97,10 @@ LOCALE_PATH = ["movies/locale"]
 
 # notification settings
 NOTIFICATION_ENABLED = False
-NOTIFICATION_TEMPLATE = ""
-NOTIFICATION_NAME = ""
-NOTIFICATION_QUEUE = ""
-NOTIFICATION_HOST = ""
+NOTIFICATION_TEMPLATE = "NOTIFICATION_TEMPLATE"
+NOTIFICATION_NAME = "NOTIFICATION"
+NOTIFICATION_QUEUE = "NOTIFICATION_QUEUE"
+NOTIFICATION_HOST = os.environ.get("NOTIFICATION_HOST")
 
 # auth settings
 AUTH_ENABLED = False

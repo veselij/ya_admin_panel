@@ -10,7 +10,7 @@ from config import settings
 
 
 def check_token(func):
-    def wrapper(self, request, *args, **kwargs):
+    def wrapper(request, *args, **kwargs):
         if settings.AUTH_ENABLED:
             token = request.POST.get("Authorization", None)
             if token and verify_token_in_auth(token):

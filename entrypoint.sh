@@ -20,6 +20,10 @@ python manage.py collectstatic --noinput
 echo "Migrate data from sqlite"
 python load_data/load_data.py
 
+echo "Sceduling regular commands"
+(crontab -l && echo "0 2 * * *  python3 manage.py makereccurentpayments") | crontab -
+(crontab -l && echo "0 2 * * *  python3 manage.py deleteusersubscriptions") | crontab -
+
 echo "Start gunicorn server"
 gunicorn -c config/gunicorn.py
 exec "$@"
