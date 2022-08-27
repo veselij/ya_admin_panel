@@ -113,8 +113,8 @@ class CancelPayment(View):
 
     http_method_names = ["post"]
 
-    @check_token
     @csrf_exempt
+    @check_token
     def dispatch(
         self,
         request: HttpRequest,
