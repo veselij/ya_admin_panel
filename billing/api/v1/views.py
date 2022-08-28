@@ -23,6 +23,7 @@ from billing.services.main import (
 )
 from billing.services.models import CancelationDetails, PaymentDetails
 from billing.services.repository.django_repositury import DjangoRepository
+from billing.utils import errormessages
 from billing.utils.security import check_token
 from config import settings
 
@@ -53,7 +54,7 @@ class InitializePayment(View):
             idempotent_key = post_body.get("idempotent_key")
             return_url = settings.AFTER_PAYMENT_URL
         except (KeyError, ValueError) as e:
-            settings.logger.exception("Bad request %s", e)
+            settings.logger.exception(errormessages.API_REQUEST, e)
             return JsonResponse(
                 {"error": e.__class__.__name__}, status=HTTPStatus.BAD_REQUEST
             )
@@ -74,7 +75,7 @@ class InitializePayment(View):
             PaymentProcessorAlreadyPayed,
             PaymentProcessorPaymentCanceled,
         ) as e:
-            settings.logger.exception("Bad request %s", e)
+            settings.logger.exception(errormessages.API_REQUEST, e)
             return JsonResponse(
                 {"error": e.__class__.__name__}, status=HTTPStatus.BAD_REQUEST
             )
@@ -131,7 +132,7 @@ class CancelPayment(View):
                 subscription_id=UUID(post_body.get("subscription_id")),
             )
         except (KeyError, ValueError) as e:
-            settings.logger.exception("Bad request %s", e)
+            settings.logger.exception(errormessages.API_REQUEST, e)
             return JsonResponse(
                 {"error": e.__class__.__name__}, status=HTTPStatus.BAD_REQUEST
             )

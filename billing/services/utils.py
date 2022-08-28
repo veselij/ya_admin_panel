@@ -10,6 +10,7 @@ import requests
 from requests import ConnectionError, ConnectTimeout, HTTPError
 
 from billing.services.models import NotificationMessage
+from billing.utils import errormessages
 from billing.utils.backoff import backoff
 from billing.utils.exceptions import RetryExceptionError
 from config import settings
@@ -67,9 +68,9 @@ def assign_user_role_in_auth(user_id: str, roles_id: str):
             )
             r.raise_for_status()
         except (ConnectTimeout, ConnectionError):
-            raise RetryExceptionError("Auth not available")
+            raise RetryExceptionError(errormessages.AUTH)
         except HTTPError:
-            settings.logger.warning("Role was not assigned")
+            settings.logger.warning(errormessages.AUTH_HTTP)
 
 
 @backoff(
@@ -88,9 +89,9 @@ def delete_user_role_in_auth(user_id: str, roles_id: str):
             )
             r.raise_for_status()
         except (ConnectTimeout, ConnectionError):
-            raise RetryExceptionError("Auth not available")
+            raise RetryExceptionError(errormessages.AUTH)
         except HTTPError:
-            settings.logger.warning("Role was not deleted")
+            settings.logger.warning(errormessages.AUTH)
 
 
 def exception_handler(

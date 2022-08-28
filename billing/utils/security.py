@@ -4,6 +4,7 @@ import requests
 from django.http.response import JsonResponse
 from requests import ConnectionError, ConnectTimeout, HTTPError
 
+from billing.utils import errormessages
 from billing.utils.backoff import backoff
 from billing.utils.exceptions import RetryExceptionError
 from config import settings
@@ -36,7 +37,7 @@ def verify_token_in_auth(token):
         r = requests.post(settings.AUTH_URL, data=json.dumps({"access_token": token}))
         r.raise_for_status()
     except (ConnectTimeout, ConnectionError):
-        raise RetryExceptionError("Auth server is not available")
+        raise RetryExceptionError(errormessages.AUTH)
     except HTTPError:
         return False
     return True
