@@ -24,6 +24,7 @@ from billing.services.models import (
     UserSubscription,
 )
 from billing.services.payments.payments import AbstractRequest, PaymentProcessor, Status
+from billing.utils import errormessages
 from billing.utils.backoff import backoff
 from billing.utils.exceptions import RetryExceptionError
 from config import settings
@@ -87,7 +88,7 @@ class YookassaPaymentProcessor(PaymentProcessor):
                 idempotent_key,
             )
         except (ConnectTimeout, ConnectionError):
-            raise RetryExceptionError("Payment provider not available")
+            raise RetryExceptionError(errormessages.PAYMENT_PROVIDER)
 
         if payment_object.paid:
             raise PaymentProcessorAlreadyPayed
@@ -127,7 +128,7 @@ class YookassaPaymentProcessor(PaymentProcessor):
                 f"{user_subscription.user.id}:{user_subscription.subscription.id}",
             )
         except (ConnectTimeout, ConnectionError):
-            raise RetryExceptionError("Payment provider not available")
+            raise RetryExceptionError(errormessages.PAYMENT_PROVIDER)
 
         return PaymentResult(
             id=UUID(payment_object.id),
@@ -147,7 +148,7 @@ class YookassaPaymentProcessor(PaymentProcessor):
         elif notification_object.event == WebhookNotificationEventType.PAYMENT_CANCELED:
             status = Status.canceled.value
         else:
-            settings.logger.warning("Unexpected webhook payment status")
+            settings.logger.warning(errormessages.PAYMENT_PROVIDER_WH)
             raise PaymentProcessorUnknownResponse
         return PaymentResponse(
             id=response_object.id,

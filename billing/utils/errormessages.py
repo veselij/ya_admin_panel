@@ -1,0 +1,5 @@
+AUTH = "Auth server is not available"
+AUTH_HTTP = "Auth server HHTP error"
+PAYMENT_PROVIDER = "Payment provider not available"
+PAYMENT_PROVIDER_WH = "Unexpected webhook payment status"
+API_REQUEST = "Bad request %s"

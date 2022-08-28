@@ -22,8 +22,8 @@ services:
       - backend_nw
     env_file:
       - ./.postgres.env
-    ports:
-      - 5432:5432
+    expose:
+      - 5432
   nginx:
     image: nginx:1.21.6
     depends_on:

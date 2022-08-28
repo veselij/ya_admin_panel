@@ -115,9 +115,8 @@ def test_cancel_subscription(repository):
 
     cancel_subscription(cancelation_details, repository)
 
-    assert (
+    assert not (
         repository.user_subscriptions[
             (cancelation_details.user_id, cancelation_details.subscription_id)
         ].auto_pay
-        == False
     )
